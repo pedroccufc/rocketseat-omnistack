@@ -1,0 +1,21 @@
+# Node.js / React / Expo generated files
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+**/.expo/
+**/.cache/
+
+# Environment variables and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Local files
+*.log
+.DS_Store
+.vscode/
+.idea/
