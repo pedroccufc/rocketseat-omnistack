@@ -1,0 +1,39 @@
+name: Be The Hero browser smoke
+
+on:
+  push:
+    paths:
+      - "be-the-hero/front-end/**"
+      - ".github/workflows/frontend-browser-smoke.yml"
+  pull_request:
+    paths:
+      - "be-the-hero/front-end/**"
+      - ".github/workflows/frontend-browser-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: be-the-hero/front-end
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: be-the-hero/front-end/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build frontend
+        run: npm run build
+      - name: Install isolated Playwright
+        run: npm install --prefix "$RUNNER_TEMP/be-the-hero-playwright" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Install Chromium
+        run: node "$RUNNER_TEMP/be-the-hero-playwright/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Smoke test browser against local fixture API
+        run: PLAYWRIGHT_PATH="$RUNNER_TEMP/be-the-hero-playwright/node_modules/playwright" node tests/browser/smoke.cjs
