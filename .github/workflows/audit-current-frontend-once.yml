@@ -1,0 +1,25 @@
+name: Temporary frontend updated audit
+
+on:
+  push:
+    branches:
+      - security/frontend-axios-1
+    paths:
+      - .github/workflows/audit-current-frontend-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: be-the-hero/front-end
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Audit dependency graph (high or critical)
+        run: npm audit --audit-level=high
