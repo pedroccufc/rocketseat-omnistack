@@ -1,0 +1,44 @@
+name: Temporary Vite migration validation
+
+on:
+  push:
+    branches:
+      - security/frontend-vite-build
+    paths:
+      - .github/workflows/refresh-vite-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  resolve-and-build:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: be-the-hero/front-end
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Regenerate npm lockfile for Vite toolchain
+        run: npm install --package-lock-only --lockfile-version=1 --ignore-scripts --no-audit --no-fund
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build Vite production frontend
+        run: npm run build
+      - name: Commit validated npm lockfile
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add be-the-hero/front-end/package-lock.json
+          git diff --cached --quiet && { echo "No lockfile update"; exit 1; }
+          git commit -m "build(frontend): regenerate lockfile after CRA to Vite migration"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/security/frontend-vite-build
