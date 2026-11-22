@@ -26,4 +26,18 @@ describe('ONG', () => {
 		expect(response.body).toHaveProperty('id');
 		expect(response.body.id).toHaveLength(8);
 	});
+	it('rejects ONG registration with an invalid email', async () => {
+		const response = await request(app)
+			.post('/ongs')
+			.send({
+				name: 'Invalid NGO',
+				email: 'not-an-email',
+				whatsapp: '11999999999',
+				city: 'Fortaleza',
+				uf: 'CE',
+			});
+
+		expect(response.status).toBe(400);
+	});
+
 });
