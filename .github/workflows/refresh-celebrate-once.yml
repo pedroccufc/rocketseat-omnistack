@@ -1,0 +1,44 @@
+name: Temporary Celebrate security upgrade verification
+
+on:
+  push:
+    branches:
+      - security/celebrate-16-upgrade
+    paths:
+      - .github/workflows/refresh-celebrate-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade-and-verify:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: be-the-hero/back-end
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Upgrade only Celebrate and bundled Joi
+        run: npm install celebrate@16.0.0 --save-exact --package-lock-only --lockfile-version=1 --ignore-scripts --no-audit --no-fund
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Execute backend and request-validation tests
+        run: npm test -- --runInBand
+      - name: Commit validated manifests
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add be-the-hero/back-end/package.json be-the-hero/back-end/package-lock.json
+          git diff --cached --quiet && { echo "No manifest changes"; exit 1; }
+          git commit -m "security(backend): upgrade Celebrate validation middleware"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/security/celebrate-16-upgrade
+      - name: Report remaining dependency advisories
+        run: npm audit --audit-level=high
