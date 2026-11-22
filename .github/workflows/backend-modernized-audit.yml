@@ -1,0 +1,61 @@
+name: Backend modernized dependency validation
+
+on:
+  push:
+    paths:
+      - "be-the-hero/back-end/**"
+      - ".github/workflows/backend-modernized-audit.yml"
+  pull_request:
+    paths:
+      - "be-the-hero/back-end/**"
+      - ".github/workflows/backend-modernized-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: be-the-hero/back-end
+    env:
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: be-the-hero/back-end/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run Jest tests
+        run: npm test -- --runInBand
+
+  production-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: be-the-hero/back-end
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Audit production dependency graph
+        run: npm audit --omit=dev --audit-level=high
+
+  full-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: be-the-hero/back-end
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Audit all locked dependencies
+        run: npm audit --audit-level=high
