@@ -49,6 +49,10 @@ module.exports = {
 			.select('ong_id')
 			.first();
 
+		if (!incident) {
+			return response.status(404).json({error: 'Incident not found'});
+		}
+
 		if(incident.ong_id != ong_id){
 			return response.status(401).json({error: 'Operation not permited'});
 		}
@@ -71,6 +75,10 @@ module.exports = {
 			.where('id', id)
 			.select('ong_id')
 			.first();
+
+		if (!incident) {
+			return response.status(404).json({error: 'Incident not found'});
+		}
 
 		if(incident.ong_id != ong_id){
 			return response.status(401).json({error: 'Operation not permited'});
