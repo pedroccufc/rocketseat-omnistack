@@ -1,0 +1,31 @@
+name: Be The Hero mobile dependency audit
+
+on:
+  push:
+    paths:
+      - "be-the-hero/mobile/**"
+      - ".github/workflows/mobile-audit.yml"
+  pull_request:
+    paths:
+      - "be-the-hero/mobile/**"
+      - ".github/workflows/mobile-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: be-the-hero/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: be-the-hero/mobile/package-lock.json
+      - name: Audit all locked dependencies
+        run: npm audit --audit-level=high
